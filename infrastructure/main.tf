@@ -74,6 +74,7 @@ resource "aws_route_table" "private_rt" {
 #}
 
 # Resource: Private Subnet - Database and Public Subnets -EC2
+#public
 resource "aws_subnet" "subnet1_app" {
   vpc_id     = aws_vpc.app_vpc.id
   cidr_block = "10.0.1.0/24"
@@ -82,6 +83,8 @@ resource "aws_subnet" "subnet1_app" {
     Name = "public-subnet1-app"
   }
 }
+
+#private
 resource "aws_subnet" "subnet2_app" {
   vpc_id     = aws_vpc.app_vpc.id
   cidr_block = "10.0.2.0/24"
@@ -92,6 +95,15 @@ resource "aws_subnet" "subnet2_app" {
   }
 }
 
+resource "aws_subnet" "subnet3_app" {
+  vpc_id     = aws_vpc.app_vpc.id
+  cidr_block = "10.0.3.0/24"
+  availability_zone = "eu-central-1c"
+
+  tags = {
+    Name = "private-subnet3-app"
+  }
+}
 # NAT Gateway (for private subnet internet access)
 #resource "aws_nat_gateway" "nat" {
  # allocation_id = aws_eip.nat_eip.id
@@ -109,8 +121,14 @@ resource "aws_route_table_association" "public_assoc" {
   route_table_id = aws_route_table.grocery-mate-route-table.id
 }
 # Associate Private Route Table
-resource "aws_route_table_association" "private_assoc" {
+resource "aws_route_table_association" "private_assoc1" {
   subnet_id      = aws_subnet.subnet2_app.id
+  route_table_id = aws_route_table.private_rt.id
+
+}
+
+resource "aws_route_table_association" "private_assoc2" {
+  subnet_id      = aws_subnet.subnet3_app.id
   route_table_id = aws_route_table.private_rt.id
 
 }
@@ -195,5 +213,40 @@ resource "aws_security_group" "db_sg" {
   }
   tags = {
     Name = "db_sg"
+  }
+}
+
+#RESOURCE: RDS POSTGRESQL
+
+resource "aws_db_subnet_group" "rds_subnet_group" {
+  name       = "rds-subnet-group"
+  subnet_ids = [
+    aws_subnet.subnet2_app.id,  # e.g., eu-central-1a
+    aws_subnet.subnet3_app.id   # e.g., eu-central-1b
+  ]
+
+  tags = {
+    Name = "rds_subnet_group"
+  }
+}
+
+resource "aws_db_instance" "postgres" {
+  identifier              = "app-db"
+  engine                  = "postgres"
+  instance_class          = "db.t3.micro"
+  allocated_storage       = 20
+  storage_type            = "gp2"
+  db_name                 = "grocerystoredb"
+  username                = "melody"
+  password                = "Egwuchukwu_13" # replace with a secret manager
+  db_subnet_group_name    = aws_db_subnet_group.rds_subnet_group.name
+  vpc_security_group_ids  = [aws_security_group.db_sg.id]
+  publicly_accessible     = false
+  skip_final_snapshot     = true
+  availability_zone       = "eu-central-1b"
+  multi_az                = false
+
+  tags = {
+    Name = "PostgreSQL RDS"
   }
 }
