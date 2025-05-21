@@ -123,6 +123,7 @@ resource "aws_instance" "grocery-mate-server" {
   associate_public_ip_address = true
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   key_name                    = "Grocerymate_key_pair"
+  availability_zone = "eu-central-1a"
   tags = {
     Name = "grocery-mate-server"
    }
