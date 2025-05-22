@@ -57,14 +57,7 @@ resource "aws_route_table" "private_rt" {
   }
 }
 
-#Elastic IP for NAT Gateway - for the EC2 LIKE entry point - no need for this since you will have ELB with DNS name
-#resource "aws_eip" "nat_eip" {
-#  domain = "vpc"
 
- # tags = {
-#    Name = "app_nat_eip"
- # }
-#}
 
 # Resource: Private Subnet - Database and Public Subnets -EC2
 #public
