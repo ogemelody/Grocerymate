@@ -13,6 +13,7 @@ provider "aws" {
 #   Create EC2
 #   Create Security Groups with Inbound rules - 22,80, 5000,5432
 #   Create RDS
+#   Create S3 Bucket
 #Question
 #1. FOR  cidr_block = "10.0.0.0/16" can I just change the value and it is ok like "10.4.6.0/16"?
 #2. For route table I only gave 0.0.0.0/0 internet access do i have to add 5000?
@@ -248,5 +249,15 @@ resource "aws_db_instance" "postgres" {
 
   tags = {
     Name = "PostgreSQL RDS"
+  }
+}
+
+#RESOURCE: S3
+resource "aws_s3_bucket" "avatars" {
+  bucket_prefix = "grocerymate-avatars-"
+
+  tags = {
+    Name        = "grocerymate-avatars-mel"
+    Environment = "Dev"
   }
 }
