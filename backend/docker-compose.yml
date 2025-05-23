@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - backend/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # For all OS
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "gunicorn --bind 0.0.0.0:5000 run:app"
