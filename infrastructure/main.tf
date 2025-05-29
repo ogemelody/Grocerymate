@@ -70,7 +70,28 @@ resource "aws_subnet" "subnet1_app" {
   }
 }
 
+resource "aws_subnet" "subnet5_app" {
+  vpc_id     = aws_vpc.app_vpc.id
+  cidr_block = "10.0.5.0/24"
+  availability_zone = "eu-central-1b"
+  tags = {
+    Name = "public-subnet5-app"
+  }
+}
+
+resource "aws_subnet" "subnet6_app" {
+  vpc_id     = aws_vpc.app_vpc.id
+  cidr_block = "10.0.6.0/24"
+  availability_zone = "eu-central-1c"
+  tags = {
+    Name = "public-subnet6-app"
+  }
+}
+
 #private
+
+# add new subnet
+
 resource "aws_subnet" "subnet2_app" {
   vpc_id     = aws_vpc.app_vpc.id
   cidr_block = "10.0.2.0/24"
@@ -90,6 +111,17 @@ resource "aws_subnet" "subnet3_app" {
     Name = "private-subnet3-app"
   }
 }
+
+resource "aws_subnet" "subnet4_app" {
+  vpc_id     = aws_vpc.app_vpc.id
+  cidr_block = "10.0.4.0/24"
+  availability_zone = "eu-central-1a"
+
+  tags = {
+    Name = "private-subnet4-app"
+  }
+}
+
 # NAT Gateway (for private subnet internet access)
 #resource "aws_nat_gateway" "nat" {
  # allocation_id = aws_eip.nat_eip.id
@@ -106,6 +138,16 @@ resource "aws_route_table_association" "public_assoc" {
   subnet_id      = aws_subnet.subnet1_app.id
   route_table_id = aws_route_table.grocery-mate-route-table.id
 }
+
+resource "aws_route_table_association" "public_assoc2" {
+  subnet_id      = aws_subnet.subnet5_app.id
+  route_table_id = aws_route_table.grocery-mate-route-table.id
+}
+resource "aws_route_table_association" "public_assoc3" {
+  subnet_id      = aws_subnet.subnet6_app.id
+  route_table_id = aws_route_table.grocery-mate-route-table.id
+}
+
 # Associate Private Route Table
 resource "aws_route_table_association" "private_assoc1" {
   subnet_id      = aws_subnet.subnet2_app.id
@@ -115,6 +157,12 @@ resource "aws_route_table_association" "private_assoc1" {
 
 resource "aws_route_table_association" "private_assoc2" {
   subnet_id      = aws_subnet.subnet3_app.id
+  route_table_id = aws_route_table.private_rt.id
+
+}
+
+resource "aws_route_table_association" "private_assoc3" {
+  subnet_id      = aws_subnet.subnet4_app.id
   route_table_id = aws_route_table.private_rt.id
 
 }
@@ -207,8 +255,9 @@ resource "aws_security_group" "db_sg" {
 resource "aws_db_subnet_group" "rds_subnet_group" {
   name       = "rds-subnet-group"
   subnet_ids = [
-    aws_subnet.subnet2_app.id,  # e.g., eu-central-1a
-    aws_subnet.subnet3_app.id   # e.g., eu-central-1b
+
+    aws_subnet.subnet2_app.id,  # e.g., eu-central-1b
+    aws_subnet.subnet3_app.id   # e.g., eu-central-1c
   ]
 
   tags = {
@@ -246,3 +295,5 @@ resource "aws_s3_bucket" "avatars" {
     Environment = "Dev"
   }
 }
+
+
