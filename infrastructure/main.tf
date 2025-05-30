@@ -1,3 +1,11 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "5.54.1"
+    }
+  }
+}
 provider "aws" {
   region = "eu-central-1"
 }
@@ -9,7 +17,7 @@ provider "aws" {
 #   Elastic IP for NAT Gateway - no need use ELB DNS name instead
 #   NAT Gateway (for private subnet internet access)
 #   Create Private Subnet - Database and Public Subnets -EC2
-#   Associate subnet with Route Table. Question (I saw this online but I did not understand why)- I think to atach the subnets to route table
+#   Associate subnet with Route Table.
 #   Create EC2
 #   Create Security Groups with Inbound rules - 22,80, 5000,5432
 #   Create RDS
@@ -250,14 +258,36 @@ resource "aws_security_group" "db_sg" {
   }
 }
 
+#security group for ALB
+resource "aws_security_group" "alb_sg" {
+  name   = "alb-sg"
+  vpc_id = aws_vpc.app_vpc.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+
 #RESOURCE: RDS POSTGRESQL
 
 resource "aws_db_subnet_group" "rds_subnet_group" {
   name       = "rds-subnet-group"
   subnet_ids = [
 
-    aws_subnet.subnet2_app.id,  # e.g., eu-central-1b
-    aws_subnet.subnet3_app.id   # e.g., eu-central-1c
+    aws_subnet.subnet2_app.id,  # eu-central-1b
+    aws_subnet.subnet3_app.id, # eu-central-1c
+    aws_subnet.subnet4_app.id # eu-central-1a
   ]
 
   tags = {
@@ -296,4 +326,52 @@ resource "aws_s3_bucket" "avatars" {
   }
 }
 
+# Target Group
+resource "aws_lb_target_group" "tg" {
+  name = "grocery-store-target-group"
+  port = 80
+  protocol = "HTTP"
+  vpc_id = aws_vpc.app_vpc.id
+}
+resource "aws_lb_target_group_attachment" "attachment" {
+  target_group_arn = aws_lb_target_group.tg.arn
+  target_id        = data.aws_instance.instance.instance_id
+}
 
+# Attach Target group with ALB with Listener Rules
+
+#RESOURCE LISTENER RULES
+resource "aws_lb_listener" "tg_rule" {
+  load_balancer_arn = aws_lb.test.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+  }
+}
+
+#RESOURCE LOAD BALANCER
+resource "aws_lb" "test" {
+  name               = "test-lb-tf"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.lb_sg.id]
+  subnets            = [for subnet in aws_subnet.public : subnet.id]
+
+  enable_deletion_protection = true
+
+  access_logs {
+    bucket  = aws_s3_bucket.lb_logs.id
+    prefix  = "test-lb"
+    enabled = true
+  }
+
+  tags = {
+    Environment = "production"
+  }
+}
+
+
+#
