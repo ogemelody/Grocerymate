@@ -189,6 +189,7 @@ resource "aws_instance" "grocery-mate-server" {
    }
 }
 
+
 #RESOURCE:SECURITY GROUP
 
 #security group for EC2
@@ -278,6 +279,35 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
+#Security Group for ASG
+resource "aws_security_group" "asg_sg" {
+  name        = "asg-sg"
+  description = "Allow SSH and app traffic"
+  vpc_id      = aws_vpc.app_vpc.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Add app port here (e.g. 8000 if using FastAPI/Django/Flask)
+  ingress {
+    from_port   = 8000
+    to_port     = 8000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 
 #RESOURCE: RDS POSTGRESQL
 
@@ -326,5 +356,131 @@ resource "aws_s3_bucket" "avatars" {
   }
 }
 
+# Attach Target group with ALB with Listener Rules
+# Target Group
+resource "aws_lb_target_group" "tg" {
+  name     = "grocery-store-target-group"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.app_vpc.id
 
-#
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "200"
+  }
+
+  target_type = "instance"
+}
+
+#RESOURCE LISTENER RULES
+resource "aws_lb_listener" "tg_rule" {
+  load_balancer_arn = aws_lb.alb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+  }
+}
+
+#RESOURCE LOAD BALANCER
+resource "aws_lb" "alb" {
+  name               = "grocery-app-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb_sg.id]
+  subnets            =  [
+  aws_subnet.subnet1_app.id,
+  aws_subnet.subnet5_app.id,
+  aws_subnet.subnet6_app.id
+]
+
+  tags = {
+    Environment = "dev"
+    Name =  "grocery-app-alb"
+  }
+}
+
+
+#RESOURCE: IAM ROLE
+resource "aws_iam_role" "ec2_role" {
+  name = "asg-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_policy_attach" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "asg-ec2-profile"
+  role = aws_iam_role.ec2_role.name
+}
+
+# ami image
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+}
+
+
+# RESOURCE: Launch Template
+resource "aws_launch_template" "asg_lt" {
+  name_prefix   = "asg-template-"
+  image_id      = data.aws_ami.amazon_linux.id
+  instance_type = "t3.micro"
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ec2_profile.name
+  }
+
+  vpc_security_group_ids = [aws_security_group.asg_sg.id]
+
+  user_data = base64encode(file("${path.module}/user_data.sh"))
+}
+
+#RESOURCES: AUTO-SCALING GROUP
+resource "aws_autoscaling_group" "asg" {
+  desired_capacity     = 1
+  max_size             = 2
+  min_size             = 1
+  vpc_zone_identifier = [
+  aws_subnet.subnet1_app.id,
+  aws_subnet.subnet5_app.id,
+  aws_subnet.subnet6_app.id
+]
+   target_group_arns = [aws_lb_target_group.tg.arn]
+
+  launch_template {
+    id      = aws_launch_template.asg_lt.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "Grocerymate-EC2"
+    propagate_at_launch = true
+  }
+}
