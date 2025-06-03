@@ -19,6 +19,6 @@ My task and focus was to design and deploy its **AWS infrastructure step by step
 Instead of setting up resource via the console , I used Terraform for full provisioning and deployment of AWS resources, which ensures a **scalable, repeatable, and error-resistant deployment process**, 
 eliminating the need for manual configurations.  
 
-For details about the **application's features, functionality, and local installation**, refer to the original [`README.md`](APPLICATION.md) by Alejandro.  
+For details about the **application's features, functionality, and local installation**, refer to the original [`README.md`](Application.md) by Alejandro.  
 
 This document focuses exclusively on the **AWS infrastructure, deployment process, and automation**.
