@@ -40,22 +40,19 @@ module "ec2" {
 
 #   Create S3 Bucket
 
-#tuitorial secrets
+#create secrets
 module "secrets_manager" {
   source      = "./modules/secrets_manager"
   db_password = var.db_password
 
 }
 
-
-
-
+#create RDS
 module "rds_postgres_db" {
   source            = "./modules/rds_postgres_db"
   db_name           = var.db_name
   db_username       = var.db_username
   subnet_ids        = module.networking.private_subnet_ids
   security_group_id = module.networking.db_sg_id
-  # If you want to pass secret ARN
   secret_arn = module.secrets_manager.secret_arn
 }
