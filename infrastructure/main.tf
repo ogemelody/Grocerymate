@@ -1,486 +1,61 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "5.54.1"
-    }
-  }
-}
-provider "aws" {
-  region = "eu-central-1"
-}
 
 
-#1. Create VPC
-#2. Create Internet gateway
-#3. Create Route Tables
-#   Elastic IP for NAT Gateway - no need use ELB DNS name instead
-#   NAT Gateway (for private subnet internet access)
-#   Create Private Subnet - Database and Public Subnets -EC2
-#   Associate subnet with Route Table.
+module "networking" {
+  source = "./modules/networking"
+
+  # VPC
+  cidr_block = var.vpc_cidr_block
+  vpc_name   = var.vpc_name
+
+  # Subnets
+  azs                  = var.azs
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
+
+  # Internet Gateway
+  igw_name = var.igw_name
+
+
+}
 #   Create EC2
+module "ec2" {
+  source            = "./modules/EC2"
+  ec2_ami_id        = var.ec2_ami_id
+  ec2_instance_type = var.ec2_instance_type
+  subnet_id         = element(module.networking.public_subnet_ids, 0) # example: first public subnet
+  security_group_id = module.networking.ec2_sg_id
+
+  instance_name = "${var.vpc_name}-app-server"
+}
+
+#3. Create Route Tables
+#   Elastic IP for NAT Gateway - no need use ELB DNS name instead because my Database is not receiving anything from the internet
+#   NAT Gateway (for private subnet internet access)
+
+#   Associate subnet with Route Table.
+
+
 #   Create Security Groups with Inbound rules - 22,80, 5000,5432
-#   Create RDS
+#   Create RDS + IAM
+
 #   Create S3 Bucket
 
-
-# ----------------CREATING RESOURCES ------------
-
-#   Resource: VPC
-resource "aws_vpc" "app_vpc" {
-  cidr_block = "10.0.0.0/16"
-  tags = {
-    Name = "grocery-app_vpc"
-  }
-}
-
-#2. Create Internet gateway
-resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.app_vpc.id
-  tags = {
-    Name = "grocery-mate-igw"
-  }
-}
-
-
-#3. Create custom Route Table
-resource "aws_route_table" "grocery-mate-route-table" {
-  vpc_id = aws_vpc.app_vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
-
-  tags = {
-    Name = "Grocery-store-route-table"
-  }
-}
-# Private Route Table
-resource "aws_route_table" "private_rt" {
-  vpc_id = aws_vpc.app_vpc.id
-
-  tags = {
-    Name = "private-route-table"
-  }
-}
-
-
-
-# Resource: Private Subnet - Database and Public Subnets -EC2
-#public
-resource "aws_subnet" "subnet1_app" {
-  vpc_id     = aws_vpc.app_vpc.id
-  cidr_block = "10.0.1.0/24"
-  availability_zone = "eu-central-1a"
-  tags = {
-    Name = "public-subnet1-app"
-  }
-}
-
-resource "aws_subnet" "subnet5_app" {
-  vpc_id     = aws_vpc.app_vpc.id
-  cidr_block = "10.0.5.0/24"
-  availability_zone = "eu-central-1b"
-  tags = {
-    Name = "public-subnet5-app"
-  }
-}
-
-resource "aws_subnet" "subnet6_app" {
-  vpc_id     = aws_vpc.app_vpc.id
-  cidr_block = "10.0.6.0/24"
-  availability_zone = "eu-central-1c"
-  tags = {
-    Name = "public-subnet6-app"
-  }
-}
-
-#private
-
-# add new subnet
-
-resource "aws_subnet" "subnet2_app" {
-  vpc_id     = aws_vpc.app_vpc.id
-  cidr_block = "10.0.2.0/24"
-  availability_zone = "eu-central-1b"
-
-  tags = {
-    Name = "private-subnet2-app"
-  }
-}
-
-resource "aws_subnet" "subnet3_app" {
-  vpc_id     = aws_vpc.app_vpc.id
-  cidr_block = "10.0.3.0/24"
-  availability_zone = "eu-central-1c"
-
-  tags = {
-    Name = "private-subnet3-app"
-  }
-}
-
-resource "aws_subnet" "subnet4_app" {
-  vpc_id     = aws_vpc.app_vpc.id
-  cidr_block = "10.0.4.0/24"
-  availability_zone = "eu-central-1a"
-
-  tags = {
-    Name = "private-subnet4-app"
-  }
-}
-
-# NAT Gateway (for private subnet internet access)
-#resource "aws_nat_gateway" "nat" {
- # allocation_id = aws_eip.nat_eip.id
- # subnet_id     = aws_subnet.subnet1_app.id  # Must be in a public subnet -Question. I saw this online not sure why it is not subnet 2?
-
- # tags = {
-#    Name = "app_nat_gw"
-#}
-#}
-
-#RESOURCE : ASSOCIATION OF route tables
-# Associate Public Route Table
-resource "aws_route_table_association" "public_assoc" {
-  subnet_id      = aws_subnet.subnet1_app.id
-  route_table_id = aws_route_table.grocery-mate-route-table.id
-}
-
-resource "aws_route_table_association" "public_assoc2" {
-  subnet_id      = aws_subnet.subnet5_app.id
-  route_table_id = aws_route_table.grocery-mate-route-table.id
-}
-resource "aws_route_table_association" "public_assoc3" {
-  subnet_id      = aws_subnet.subnet6_app.id
-  route_table_id = aws_route_table.grocery-mate-route-table.id
-}
-
-# Associate Private Route Table
-resource "aws_route_table_association" "private_assoc1" {
-  subnet_id      = aws_subnet.subnet2_app.id
-  route_table_id = aws_route_table.private_rt.id
+#tuitorial secrets
+module "secrets_manager" {
+  source      = "./modules/secrets_manager"
+  db_password = var.db_password
 
 }
 
-resource "aws_route_table_association" "private_assoc2" {
-  subnet_id      = aws_subnet.subnet3_app.id
-  route_table_id = aws_route_table.private_rt.id
-
-}
-
-resource "aws_route_table_association" "private_assoc3" {
-  subnet_id      = aws_subnet.subnet4_app.id
-  route_table_id = aws_route_table.private_rt.id
-
-}
-
-#RESOURCE: EC2
-resource "aws_instance" "grocery-mate-server" {
-  ami           = "ami-02b7d5b1e55a7b5f1"
-  instance_type = "t3.micro"
-  subnet_id                   = aws_subnet.subnet1_app.id
-  associate_public_ip_address = true
-  vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
-  key_name                    = "Grocerymate_key_pair"
-  availability_zone = "eu-central-1a"
-  tags = {
-    Name = "grocery-mate-server"
-   }
-}
 
 
-#RESOURCE:SECURITY GROUP
 
-#security group for EC2
-resource "aws_security_group" "ec2_sg" {
-  name        = "ec2_sg"
-  description = "Allow SSH"
-  vpc_id      = aws_vpc.app_vpc.id
-  ingress {
-      description = "SSH"
-      from_port   = 22
-      to_port     = 22
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]  # Change to your IP for security
-    }
-
-  ingress {
-      description = "internet"
-      from_port   = 80
-      to_port     = 80
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]  # Change to your IP for security
-    }
-
-  ingress {
-      description = "database"
-      from_port   = 5000
-      to_port     = 5000
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]  # Change to your IP for security
-    }
-
-    egress {
-      from_port   = 0
-      to_port     = 0
-      protocol    = "-1"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-    tags = {
-      Name = "ec2_sg"
-    }
-}
-
-#security group for DB
-resource "aws_security_group" "db_sg" {
-  name        = "db_sg"
-  description = "Allow POSTGRESQL"
-  vpc_id      = aws_vpc.app_vpc.id
-
-
-  ingress {
-    description = "database"
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    security_groups = [aws_security_group.ec2_sg.id]
-
-  }
-
-  egress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  tags = {
-    Name = "db_sg"
-  }
-}
-
-#security group for ALB
-resource "aws_security_group" "alb_sg" {
-  name   = "alb-sg"
-  vpc_id = aws_vpc.app_vpc.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-#Security Group for ASG
-resource "aws_security_group" "asg_sg" {
-  name        = "asg-sg"
-  description = "Allow SSH and app traffic"
-  vpc_id      = aws_vpc.app_vpc.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Add app port here (e.g. 8000 if using FastAPI/Django/Flask)
-  ingress {
-    from_port   = 8000
-    to_port     = 8000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-
-#RESOURCE: RDS POSTGRESQL
-
-resource "aws_db_subnet_group" "rds_subnet_group" {
-  name       = "rds-subnet-group"
-  subnet_ids = [
-
-    aws_subnet.subnet2_app.id,  # eu-central-1b
-    aws_subnet.subnet3_app.id, # eu-central-1c
-    aws_subnet.subnet4_app.id # eu-central-1a
-  ]
-
-  tags = {
-    Name = "rds_subnet_group"
-  }
-}
-
-resource "aws_db_instance" "postgres" {
-  identifier              = "app-db"
-  engine                  = "postgres"
-  instance_class          = "db.t3.micro"
-  allocated_storage       = 20
-  storage_type            = "gp2"
-  db_name                 = "grocerystoredb"
-  username                = "melody"
-  password                = "Egwuchukwu_13" # replace with a secret manager
-  db_subnet_group_name    = aws_db_subnet_group.rds_subnet_group.name
-  vpc_security_group_ids  = [aws_security_group.db_sg.id]
-  publicly_accessible     = false
-  skip_final_snapshot     = true
-  availability_zone       = "eu-central-1b"
-  multi_az                = false
-
-  tags = {
-    Name = "PostgreSQL RDS"
-  }
-}
-
-#RESOURCE: S3
-resource "aws_s3_bucket" "avatars" {
-  bucket_prefix = "grocerymate-avatars-"
-
-  tags = {
-    Name        = "grocerymate-avatars-mel"
-    Environment = "Dev"
-  }
-}
-
-# Attach Target group with ALB with Listener Rules
-# Target Group
-resource "aws_lb_target_group" "tg" {
-  name     = "grocery-store-target-group"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.app_vpc.id
-
-  health_check {
-    path                = "/"
-    protocol            = "HTTP"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    matcher             = "200"
-  }
-
-  target_type = "instance"
-}
-
-#RESOURCE LISTENER RULES
-resource "aws_lb_listener" "tg_rule" {
-  load_balancer_arn = aws_lb.alb.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type = "forward"
-    target_group_arn = aws_lb_target_group.tg.arn
-  }
-}
-
-#RESOURCE LOAD BALANCER
-resource "aws_lb" "alb" {
-  name               = "grocery-app-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb_sg.id]
-  subnets            =  [
-  aws_subnet.subnet1_app.id,
-  aws_subnet.subnet5_app.id,
-  aws_subnet.subnet6_app.id
-]
-
-  tags = {
-    Environment = "dev"
-    Name =  "grocery-app-alb"
-  }
-}
-
-
-#RESOURCE: IAM ROLE
-resource "aws_iam_role" "ec2_role" {
-  name = "asg-ec2-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Action = "sts:AssumeRole",
-      Effect = "Allow",
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ec2_policy_attach" {
-  role       = aws_iam_role.ec2_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
-}
-
-resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "asg-ec2-profile"
-  role = aws_iam_role.ec2_role.name
-}
-
-# ami image
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
-
-
-# RESOURCE: Launch Template
-resource "aws_launch_template" "asg_lt" {
-  name_prefix   = "asg-template-"
-  image_id      = data.aws_ami.amazon_linux.id
-  instance_type = "t3.micro"
-
-  iam_instance_profile {
-    name = aws_iam_instance_profile.ec2_profile.name
-  }
-
-  vpc_security_group_ids = [aws_security_group.asg_sg.id]
-
-  user_data = base64encode(file("${path.module}/user_data.sh"))
-}
-
-#RESOURCES: AUTO-SCALING GROUP
-resource "aws_autoscaling_group" "asg" {
-  desired_capacity     = 1
-  max_size             = 2
-  min_size             = 1
-  vpc_zone_identifier = [
-  aws_subnet.subnet1_app.id,
-  aws_subnet.subnet5_app.id,
-  aws_subnet.subnet6_app.id
-]
-   target_group_arns = [aws_lb_target_group.tg.arn]
-
-  launch_template {
-    id      = aws_launch_template.asg_lt.id
-    version = "$Latest"
-  }
-
-  tag {
-    key                 = "Name"
-    value               = "Grocerymate-EC2"
-    propagate_at_launch = true
-  }
+module "rds_postgres_db" {
+  source            = "./modules/rds_postgres_db"
+  db_name           = var.db_name
+  db_username       = var.db_username
+  subnet_ids        = module.networking.private_subnet_ids
+  security_group_id = module.networking.db_sg_id
+  # If you want to pass secret ARN
+  secret_arn = module.secrets_manager.secret_arn
 }
