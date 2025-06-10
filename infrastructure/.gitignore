@@ -2,3 +2,6 @@
 .terraform.lock.hcl
 terraform.tfstate
 terraform.tfstate.backup
+*.tfvars
+/modules/launch_template/user_data.sh
+Grocerymate_key_pair.pem
