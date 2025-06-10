@@ -30,6 +30,7 @@ resource "aws_db_instance" "primary" {
   skip_final_snapshot    = true
   multi_az               = true
   availability_zone      = null # AWS picks one automatically for primary
+  backup_retention_period = 7
   tags = {
     Name = "Primary PostgreSQL"
   }
@@ -37,9 +38,9 @@ resource "aws_db_instance" "primary" {
 
 resource "aws_db_instance" "read_replica_1" {
   identifier              = "${replace(lower(var.db_name), "_", "-")}-replica-1"
-  replicate_source_db     = aws_db_instance.primary.id
+  replicate_source_db     = aws_db_instance.primary.identifier
   instance_class          = "db.t3.micro"
-  db_subnet_group_name    = aws_db_subnet_group.rds_subnet_group.name
+  #db_subnet_group_name    = aws_db_subnet_group.rds_subnet_group.name #should not be added to replica
   vpc_security_group_ids  = [var.security_group_id]
   publicly_accessible     = false
   availability_zone       = "eu-central-1b"
@@ -53,9 +54,9 @@ resource "aws_db_instance" "read_replica_1" {
 
 resource "aws_db_instance" "read_replica_2" {
   identifier              = "${replace(lower(var.db_name), "_", "-")}-replica-2"
-  replicate_source_db     = aws_db_instance.primary.id
+  replicate_source_db     = aws_db_instance.primary.identifier
   instance_class          = "db.t3.micro"
-  db_subnet_group_name    = aws_db_subnet_group.rds_subnet_group.name
+  #db_subnet_group_name    = aws_db_subnet_group.rds_subnet_group.name    #should not be added to replica
   vpc_security_group_ids  = [var.security_group_id]
   publicly_accessible     = false
   availability_zone       = "eu-central-1c"
