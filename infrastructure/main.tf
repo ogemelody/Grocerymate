@@ -24,7 +24,7 @@ module "ec2" {
   ec2_instance_type = var.ec2_instance_type
   subnet_id         = element(module.networking.public_subnet_ids, 0) # example: first public subnet
   security_group_id = module.networking.ec2_sg_id
-
+  key_name          = var.ec2_key_name
   instance_name = "${var.vpc_name}-app-server"
 }
 
@@ -56,3 +56,11 @@ module "rds_postgres_db" {
   security_group_id = module.networking.db_sg_id
   secret_arn = module.secrets_manager.secret_arn
 }
+
+#S3
+module "aws_s3_bucket" {
+  source      = "./modules/s3_bucket"
+  bucket_name = var.s3_bucket_name
+  environment = "dev"
+}
+

@@ -17,3 +17,4 @@ variable "secret_arn" {
   description = "ARN of the secret storing DB password"
   type        = string
 }
+
