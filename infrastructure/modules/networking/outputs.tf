@@ -42,3 +42,12 @@ output "db_sg_id" {
   value = aws_security_group.db_sg.id
 }
 
+#sg - alb
+output "alb_sg_id" {
+  value = aws_security_group.alb_sg.id
+}
+
+#sg- asg
+output "asg_sg_id" {
+  value = aws_security_group.asg_sg.id
+}
