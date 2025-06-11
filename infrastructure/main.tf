@@ -98,5 +98,3 @@ module "alb" {
   health_check_path     = "/health"
 }
 
-
-module.networking.alb_security_group_id
