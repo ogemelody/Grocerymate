@@ -25,7 +25,7 @@ module "ec2" {
   subnet_id         = element(module.networking.public_subnet_ids, 0) # example: first public subnet
   security_group_id = module.networking.ec2_sg_id
   key_name          = var.ec2_key_name
-  instance_name = "${var.vpc_name}-app-server"
+  instance_name     = "${var.vpc_name}-app-server"
 }
 
 #3. Create Route Tables
@@ -54,7 +54,7 @@ module "rds_postgres_db" {
   db_username       = var.db_username
   subnet_ids        = module.networking.private_subnet_ids
   security_group_id = module.networking.db_sg_id
-  secret_arn = module.secrets_manager.secret_arn
+  secret_arn        = module.secrets_manager.secret_arn
 }
 
 #S3
@@ -64,3 +64,39 @@ module "aws_s3_bucket" {
   environment = "dev"
 }
 
+#launch templates
+module "launch_template" {
+  source            = "./modules/launch_template"
+  ami_id            = var.ami_id
+  instance_type     = var.ec2_instance_type
+  key_name          = var.key_name
+  security_group_id = module.networking.ec2_sg_id
+  name              = "${var.vpc_name}-app-template"
+}
+
+module "asg" {
+  source             = "./modules/asg"
+  asg_name           = "grocerymate-asg"
+  desired_capacity   = 1      #  desired capacity
+  max_size           = 4      #  desired max_size
+  min_size           = 1      #  desired min_size
+  public_subnet_ids  = module.networking.private_subnet_ids
+  launch_template_id = module.launch_template.launch_template_id
+  ec2_name           = "grocerymate-app-asg"
+  target_group_arn   = module.alb.target_group_arn
+
+}
+
+module "alb" {
+  source                = "./modules/alb"
+  alb_name              = "grocery-alb"
+  alb_security_group_id = module.networking.alb_sg_id
+  public_subnet_ids     = module.networking.public_subnet_ids
+  target_group_name     = "grocery-alb-tg"
+  target_group_port     = 5000
+  vpc_id                = module.networking.vpc_id
+  health_check_path     = "/health"
+}
+
+
+module.networking.alb_security_group_id
