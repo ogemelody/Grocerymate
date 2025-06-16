@@ -77,10 +77,10 @@ module "launch_template" {
 module "asg" {
   source             = "./modules/asg"
   asg_name           = "grocerymate-asg"
-  desired_capacity   = 1      #  desired capacity
-  max_size           = 4      #  desired max_size
-  min_size           = 1      #  desired min_size
-  public_subnet_ids  = module.networking.private_subnet_ids
+  desired_capacity   = 1 #  desired capacity
+  max_size           = 4 #  desired max_size
+  min_size           = 1 #  desired min_size
+  public_subnet_ids  = module.networking.public_subnet_ids
   launch_template_id = module.launch_template.launch_template_id
   ec2_name           = "grocerymate-app-asg"
   target_group_arn   = module.alb.target_group_arn
