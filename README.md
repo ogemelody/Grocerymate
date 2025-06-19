@@ -41,7 +41,9 @@ The infrastructure is designed for **high availability, scalability, and securit
 ![Resources](Assets/Cloud_Grocery_app.jpg)
 
 **VPC Routing**
+
 ![Resources](Assets/VPC_Routing.jpg)
+
 
 ---
 ## 🛠️ Terraform configuration
