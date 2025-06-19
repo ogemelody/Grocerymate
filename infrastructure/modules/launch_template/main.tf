@@ -5,8 +5,14 @@ resource "aws_launch_template" "grocerymate-app-launch-template" {
 
   key_name = var.key_name
 
-  vpc_security_group_ids = [var.security_group_id]
+
+  network_interfaces {
+    associate_public_ip_address = true
+    security_groups             = [var.security_group_id]
+  }
   user_data              = base64encode(file("${path.module}/user_data.sh"))
+
+
 
   tag_specifications {
     resource_type = "instance"
@@ -15,3 +21,4 @@ resource "aws_launch_template" "grocerymate-app-launch-template" {
     }
   }
 }
+
