@@ -159,7 +159,7 @@ This infrastructure is modularized for reusability and maintainability
     - Block Public Policy: Disabled.
   - **Preloaded Avatar**: `user_default.png` is uploaded.
   
-### **8. 🎭 IAM Roles & Policies**
+### **8.  IAM Roles & Policies**
 - **EC2 Role:** Allows EC2 accessing S3.
 
 ---
