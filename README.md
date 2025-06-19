@@ -42,8 +42,8 @@ The infrastructure is designed for **high availability, scalability, and securit
 
 
 **VPC Routing**
+- 
 ![Resources](Assets/VPC_Routing.jpg)
-
 
 ---
 ## 🛠️ Terraform configuration
