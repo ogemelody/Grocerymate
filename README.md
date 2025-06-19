@@ -96,6 +96,7 @@ This infrastructure is modularized for reusability and maintainability
 
 4. **EC2**
 - The application is initially configured on the EC2 instance with all the required libraries and dependencies.
+- Check how to deploy the APP in the EC2 [HERE](https://opposite-marquis-ef0.notion.site/Setting-up-the-APP-in-EC2-1fd932e14f8380c49012cb62eebdcc5f?source=copy_link)
 - Once fully set up, a custom Amazon Machine Image (AMI) is created from this instance for reuse in deployments.
 
 5. **networking**
