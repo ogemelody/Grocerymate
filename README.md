@@ -45,8 +45,34 @@ The infrastructure is designed for **high availability, scalability, and securit
 
 ---
 ## 🛠️ Terraform configuration
-Used the main.tf in creating all the AWS resources.
+The Terraform in creating all the AWS resources.
+<pre> 
+/infrastructure
+│
+├── .terraform/                     # Terraform working directory
+│
+├── modules/                        # Terraform modules
+│   ├── alb/                        # Application Load Balancer resources
+│   ├── asg/                        # Auto Scaling Group
+│   ├── EC2/                        # EC2 instance setup
+│   ├── iam/                        # IAM roles and policies
+│   ├── launch_template/           # EC2 Launch Template
+│   ├── networking/                # Networking resources (e.g., VPC, Subnets)
+│   ├── rds_postgres_db/           # RDS PostgreSQL setup
+│   ├── s3_bucket/                 # S3 bucket configuration
+│   ├── secrets_manager/          # AWS Secrets Manager integration
+│
+├── .gitignore                     # Git ignore file
+├── .terraform.lock.hcl           # Terraform dependency lock file
+├── main.tf                       # Root module - main entry
+├── outputs.tf                    # Output values
+├── provider.tf                   # Provider configurations
+├── terraform.tfstate             # Terraform state file
+├── terraform.tfstate.backup      # Backup of the state file
+├── terraform.tfvars              # Variable values
+├── variables.tf                  # Input variable definitions
 
+</pre>
 ---
 ## 🏢 Infrastructure Components
 
