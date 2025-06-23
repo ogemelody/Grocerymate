@@ -24,6 +24,22 @@ For details about the **application's features, functionality, and local install
 This document focuses exclusively on the **AWS infrastructure, deployment process, and automation**.
 
 ---
+### DEMO
+![Resources](Assets/0620/0620.mov)
+
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2010.57.08.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2010.57.44.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2010.57.30.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.03.41.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.10.13.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.12.57.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.00.28.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.01.12.png)
+
+
+
+
+---
 ## 🏗️ Infrastructure Overview
 
 This modularized Terraform configuration provisions the infrastructure for a grocery web application using AWS.
