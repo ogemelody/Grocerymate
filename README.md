@@ -25,7 +25,8 @@ This document focuses exclusively on the **AWS infrastructure, deployment proces
 
 ---
 ### DEMO
-![Resources](Assets/0620/0620-Cover.jpg)(https://youtu.be/4n6G77CKFzs?si=K3PDG3HHLq0MjBV8)
+![Resources](Assets/0620/0620-Cover.jpg)
+Link to Watch Deployment Demo: (https://youtu.be/4n6G77CKFzs?si=K3PDG3HHLq0MjBV8)
 
 
 
