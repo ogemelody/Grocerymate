@@ -25,17 +25,7 @@ This document focuses exclusively on the **AWS infrastructure, deployment proces
 
 ---
 ### DEMO
-![Resources](Assets/0620/0620.mov)
-
-![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2010.57.08.png)
-![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2010.57.44.png)
-![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2010.57.30.png)
-![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.03.41.png)
-![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.10.13.png)
-![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.12.57.png)
-![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.00.28.png)
-![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.01.12.png)
-
+![Resources](Assets/0620/0620-Cover.jpg)(https://youtu.be/4n6G77CKFzs?si=K3PDG3HHLq0MjBV8)
 
 
 
@@ -178,6 +168,17 @@ This infrastructure is modularized for reusability and maintainability
   
 ### **8.  IAM Roles & Policies**
 - **EC2 Role:** Allows EC2 accessing S3.
+
+### Snippet
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2010.57.08.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2010.57.44.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2010.57.30.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.03.41.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.10.13.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.12.57.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.00.28.png)
+![Resources](Assets/grocery_infra/Screenshot%202025-06-23%20at%2011.01.12.png)
+
 
 ---
 # Conclusion 
